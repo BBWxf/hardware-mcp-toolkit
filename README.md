@@ -1,4 +1,4 @@
-# 实验室仪器 MCP 工具箱
+# 硬件 MCP 工具箱（hardware-mcp-toolkit）
 
 通过 [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) 将串口、GPIB/VISA 仪器、J-Link、NI USB-845x I2C 接口和泰克示波器接入支持 MCP 的客户端。
 
@@ -21,8 +21,8 @@
 ### 1. 获取源码
 
 ```powershell
-git clone https://github.com/BBWxf/-MCP.git lab-instrument-mcp
-cd lab-instrument-mcp
+git clone https://github.com/BBWxf/hardware-mcp-toolkit.git hardware-mcp-toolkit
+cd hardware-mcp-toolkit
 ```
 
 ### 2. 选择一个项目安装
@@ -55,8 +55,8 @@ uv sync --python 3.12
 {
   "mcpServers": {
     "serial-mcp": {
-      "command": "C:\\path\\to\\lab-instrument-mcp\\COM_MCP\\.venv\\Scripts\\python.exe",
-      "args": ["C:\\path\\to\\lab-instrument-mcp\\COM_MCP\\serial_mcp_server.py"]
+      "command": "C:\\path\\to\\hardware-mcp-toolkit\\COM_MCP\\.venv\\Scripts\\python.exe",
+      "args": ["C:\\path\\to\\hardware-mcp-toolkit\\COM_MCP\\serial_mcp_server.py"]
     }
   }
 }

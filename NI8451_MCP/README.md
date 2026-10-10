@@ -71,8 +71,8 @@ claude mcp get ni8451-i2c
 {
   "mcpServers": {
     "ni8451-i2c": {
-      "command": "C:\\path\\to\\lab-instrument-mcp\\NI8451_MCP\\.venv\\Scripts\\python.exe",
-      "args": ["C:\\path\\to\\lab-instrument-mcp\\NI8451_MCP\\server.py"]
+      "command": "C:\\path\\to\\hardware-mcp-toolkit\\NI8451_MCP\\.venv\\Scripts\\python.exe",
+      "args": ["C:\\path\\to\\hardware-mcp-toolkit\\NI8451_MCP\\server.py"]
     }
   }
 }
