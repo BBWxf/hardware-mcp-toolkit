@@ -1,0 +1,6 @@
+# MCP Python SDK（stdio 服务端）。1.8.1 不依赖 PyJWT[crypto]，可用于 32 位 Python。
+mcp==1.8.1
+# PyLink 是对 SEGGER JLinkARM.dll 的 Python 包装；本文档按 2.0.1 编写。
+pylink-square==2.0.1
+# 7.x 不再提供 Windows x86 wheel；6.1.1 提供 cp37-abi3-win32 wheel。
+psutil==6.1.1

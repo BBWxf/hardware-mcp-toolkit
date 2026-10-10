@@ -1,0 +1,6 @@
+mcp>=1.28,<2
+pyvisa>=1.14,<2
+pyvisa-py>=0.7,<1
+# 注意：mcp 官方SDK在2.0版本把 FastMCP 改名成了 MCPServer 并挪了模块路径，
+# 装 2.x 会导致本项目 server.py 直接 import 报错。这里锁定 <2，
+# 以后如果想升级到2.x的新架构，需要同步改 server.py 里的 import 和类名。

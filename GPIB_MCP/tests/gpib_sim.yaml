@@ -1,0 +1,20 @@
+spec: "1.0"
+
+devices:
+  demo-instrument:
+    eom:
+      GPIB INSTR:
+        q: "\n"
+        r: "\n"
+    dialogues:
+      - q: "*IDN?"
+        r: "ACME,MODEL-1000,SN12345,1.0"
+      - q: "MEAS:VOLT?"
+        r: "1.2345"
+      - q: "WAV:DATA?"
+        r: "DEMO-WAVEFORM"
+      - q: "VOLT 5"
+
+resources:
+  GPIB0::5::INSTR:
+    device: demo-instrument

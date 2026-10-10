@@ -1,0 +1,49 @@
+# Python 虚拟环境、缓存与构建产物
+.venv/
+.venv-*/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# 本地客户端配置与密钥
+.claude/
+.mcp.json
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# 实际设备配置与运行输出（保留示例配置）
+/SCOPE_MCP/scopes.json
+screenshots/
+test_screenshot.png
+*.log
+
+# 产品固件、J-Flash 工程及厂商二进制文件
+*.hex
+*.bin
+*.elf
+*.axf
+*.jflash
+*.dll
+*.exe
+
+# 厂商手册与本地开发资料：未确认再分发授权，不发布
+/GPIB_MCP/*.pdf
+/GPIB_MCP/仪器远程命令资料.md
+*开发提示词*.md
+
+# 操作系统生成文件
+.DS_Store
+Thumbs.db
+desktop.ini
