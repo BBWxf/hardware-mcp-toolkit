@@ -1,9 +1,18 @@
 # 泰克示波器 MCP Server（tek-oscilloscope）
 
-让 Claude（Claude Code / Claude Desktop）通过网口直接读取和控制实验室里的泰克
-4/5/6 系列 MSO 示波器（MSO44 及同系列，如 MSO46/MSO54/MSO56/MSO58/MSO64）。
+让 Claude（Claude Code / Claude Desktop）通过网口直接读取和控制实验室里的泰克示波器：
 
-支持多台示波器：每次调用工具时传入对应 IP 即可，换示波器不用改代码。
+- **4/5/6 系列 MSO**：MSO44 及同系列，如 MSO46/MSO54/MSO56/MSO58/MSO64。
+- **MDO3000 系列**：MDO3012/MDO3014、MDO3022/MDO3024、MDO3032/MDO3034、
+  MDO3052/MDO3054、MDO3102/MDO3104（型号中的 O 为字母，不是数字 0）。
+
+支持多台、不同系列的示波器混用：每次调用工具时传入对应 IP 即可。
+存在代际差异的功能会通过 `*IDN?` 自动识别型号，不需要手工选择型号或修改配置格式。
+MDO3000 支持本项目现有的模拟通道功能；两通道型号只允许 CH1/CH2。
+新增支持已按官方命令资料核对并通过模拟测试。2026-10-16 已在 **MDO3054、固件 v1.30**
+实机验证型号查询、PNG 截图、CH1 波形及即时测量读取，仪器事件队列为空。
+数据传输和即时测量设置在测试后已恢复并回读确认；通道显示、挡位、时基、触发源及采集状态未变。
+其他 MDO3000 型号/固件及通道、触发、时基、采集控制写操作尚未实机验证。
 
 ---
 
@@ -38,6 +47,8 @@ Claude ── (MCP协议, stdio) ──> server.py ──> scope_commands.py ─
    （建议用固定IP，不然示波器重启后IP可能变，配置文件就要跟着改）
 2. 确认 Socket Server（网口 SCPI 原始通信，端口4000）是打开的
    ——4/5/6系列出厂一般默认打开，如果连不上，第一个要查的就是这个开关
+3. **MDO3000**：将 Socket Server 端口设为 **4000**，协议设为 **NONE**，
+   不要使用会插入欢迎语/提示符的 TERMINAL 模式；截图还需要网络 VXI-11 可用
 
 ### 2.2 电脑一侧
 
@@ -73,6 +84,12 @@ if (-not (Test-Path scopes.json)) { Copy-Item scopes.example.json scopes.json }
 会依次执行连接、截图、波形读取、测量值读取、通道设置，改变部分仪器状态。
 确认设备、接线和操作者授权后再运行。如果某一步报错，检查 `scope_commands.py` 中对应的 SCPI 命令，
 调通了再去接 Claude —— 这样出问题时排查范围小很多。
+
+不连接设备的单元测试（使用模拟 SCPI 响应，不会操作真实仪器）：
+
+```powershell
+& .\.venv\Scripts\python.exe -m unittest discover -v
+```
 
 ### 2.4 接入 Claude Code
 
@@ -145,8 +162,25 @@ claude mcp remove --scope user tek-oscilloscope
 | `run_acquisition` | `ACQuire:STOPAfter` `ACQuire:STATE` | ✅ 泰克通用命令 |
 | `set_horizontal` | `HORizontal:SCAle` `HORizontal:POSition` | ✅ 泰克通用命令 |
 
+MDO3000 与上表不同的命令：
+
+| 功能 | MDO3000 指令 / 行为 |
+|---|---|
+| 截图 | VXI-11：`SAVE:IMAGe:FILEFormat PNG` → `HARDCopy STARt` → 原始字节读取；随后恢复原格式，不写仪器存储文件 |
+| 自动测量 | `MEASUrement:IMMed:SOUrce1` → `MEASUrement:IMMed:TYPe` → `*OPC?` → `MEASUrement:IMMed:VALue?` |
+| 通道显示开关 | `SELect:CHx ON/OFF`（仪器同时重置采集，开启时会选中该波形） |
+| 边沿触发电平 | `TRIGger:A:LEVel:CHx`；不传 `source` 时查询当前边沿触发源。若当前源不是模拟通道，需显式传入有效的 CH1–CH4 |
+| 波形 | 仍用 `DATa:ENCdg ASCIi`、`WFMOutpre` 和 `CURVE?`；单次最多 100 万点，时间轴使用 `XZERO + index * XINCR` |
+
 官方完整命令手册（4/5/6 Series MSO Programmer Manual）：
 https://download.tek.com/manual/4-5-6Series-MSO-Programmer-Interface-Manual_EN-US_077130508.pdf
+
+MDO3000 官方编程手册（与 MDO4000 等系列共用，077-0510-09 Rev A）：
+https://download.tek.com/manual/MDO4000-B-C-MSO-DPO4000B-and-MDO3000-Oscilloscope-Programmer-Manual-Revision-A-077051009.pdf
+
+关键章节：截图 2-331～332，通道耦合 2-221～222，即时测量 2-424～431，
+通道开关 2-755，触发电平 2-878，波形前导 2-959～971。
+上述指令依据官方资料核对，实机验证范围见文首；模拟测试不代替其他型号/固件的实机验证。
 
 ---
 
@@ -168,7 +202,13 @@ with TekScope("192.0.2.1") as scope:
 
 ### 6.2 如果 `get_measurement` 报错
 
-这是本项目里最不确定的一块（见上表⚠️标注）。排查步骤：
+以下针对原有 **4/5/6 系列 MSO** 测量槽位命令（见上表⚠️标注）；
+MDO3000 使用 `MEASUrement:IMMed:SOUrce1/TYPe/VALue?`，不发送 `STATE ON`，
+也不覆盖面板上的 MEAS1。对现有接口的 `RISetime/FALltime/OVERshoot`，
+MDO3000 分别发送 `RISE/FALL/POVERSHOOT`（正过冲）；负过冲可显式传入 `NOVERSHOOT`。
+约 `9.9E37` 的不可测量哨兵会报告错误，不作为有效测量值返回。
+
+MSO 排查步骤：
 
 1. 用上面的 `check_error()` 方法，把 `scope_commands.py` 里
    `get_measurement` 函数中的四条命令逐条单独跑一遍，看哪一条报错
@@ -180,23 +220,31 @@ with TekScope("192.0.2.1") as scope:
 
 ### 6.3 如果 `set_channel` 里的开关命令报错
 
-同样用 `check_error()` 测试 `DISplay:GLObal:CH1:STATE ON` 这条命令。
-如果报错，大概率是命令名不对，去泰克手册里搜 "channel state" 或
-"display waveform" 找准确命令名，替换 `scope_commands.py` 里 `set_channel`
-函数中的对应那一行。
+4/5/6 系列 MSO 使用原有的 `DISplay:GLObal:CH1:STATE ON`；
+MDO3000 自动改用 `SELect:CH1 ON`。可用 `check_error()` 读取仪器事件队列。
+两系列的耦合均为 `AC/DC/DCREJect`，不支持 `GND`；`DCREJect` 需要探头支持，
+否则仪器可能返回 settings conflict，实际耦合不变，需检查返回的 `scope_errors`。
+非法耦合或两通道 MDO 上的 CH3/CH4 会在发送设置命令前报错。
 
 ### 6.4 截图打不开 / 是空文件
 
-`SAVE:IMAGE` 是异步操作，必须在保存命令后查询 `*OPC?` 并确认返回 `1`，
-不能仅依靠固定延时。MSO44 的文件名通过 `SAVE:IMAGE:FILEName` 配置，随后不带参数
-发送 `SAVE:IMAGE` 执行保存；不能把文件名直接作为 `SAVE:IMAGE` 的参数。`FILESystem:READFile`
-返回原始文件字节，不是 IEEE 488.2 长度块。截图传输使用 VXI-11（`TCPIP0::<IP>::inst0::INSTR`），
-需要 `pyvisa` 与 `pyvisa-py`；其余 SCPI 命令继续使用端口 4000 的 raw socket。
+- **MSO44**：`SAVE:IMAGE` 是异步操作，保存后查询 `*OPC?` 并确认返回 `1`，
+  不能仅依靠固定延时。文件名通过 `SAVE:IMAGE:FILEName` 配置，随后不带参数
+  发送 `SAVE:IMAGE`；`FILESystem:READFile` 返回原始文件字节，不是 IEEE 488.2 长度块。
+- **MDO3000**：设置 `SAVE:IMAGE:FILEFORMAT PNG` 后，发送 `HARDCOPY START` 并原始读取图像，
+  不使用 `SAVE:IMAGE:FILENAME`，不需要 U 盘。注意不能省略 `START`，否则会输出到打印机。
+  读取后尝试恢复原截图格式；代码校验 PNG 文件头和 IEND，拒绝空文件或截断数据。
+
+截图传输均使用 VXI-11（`TCPIP0::<IP>::inst0::INSTR`），需要 `pyvisa` 与 `pyvisa-py`；
+其余 SCPI 命令继续使用端口 4000 的 raw socket。已在 MDO3054 v1.30 上确认直接返回完整 PNG，
+无需解析 IEEE 488.2 块头；其他型号/固件仍需实机验证。
 
 ### 6.5 波形数据读取很慢
 
 `get_waveform` 默认用 ASCII 编码传输（简单可靠但慢），且默认限制
-`max_points=100_000`。如果需要更快或更多点数：
+`max_points=100_000`。MDO3000 单次 ASCII 传输上限为 100 万点，传入更大的
+`max_points` 也只会读取前 100 万点。源通道须已经显示，本工具不会为读取而擅自开启通道。
+如果需要更快或更多点数：
 - 减少 `max_points`（比如只要5000点看形状足够了）够快
 - 如果需要又快又多点，需要改成二进制编码传输（`DATa:ENCdg SRIBINARY`），
   但要处理字节序和数据宽度，改动量较大，目前版本先不做，按需再升级
@@ -214,7 +262,8 @@ pip install "mcp>=1.28,<2" --force-reinstall --no-deps
 
 ## 7. 已知限制
 
-- **测量槽位共用**：`get_measurement` 固定用 `MEAS1` 这个槽位。如果有人
+- **MSO 测量槽位共用**：4/5/6 系列的 `get_measurement` 固定用 `MEAS1` 这个槽位；
+  MDO3000 使用独立即时测量，不占用该槽位。如果有人
   同时在示波器面板上手动配置了 MEAS1，会互相覆盖。如果需要，可以在
   `scope_commands.py` 里把 `_TEMP_MEAS_SLOT` 改成固定用 `MEAS8`（示波器
   面板上人工操作一般不会用到最后一个槽位），减少冲突概率

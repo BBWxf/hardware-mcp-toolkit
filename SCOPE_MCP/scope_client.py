@@ -1,12 +1,12 @@
 """
 scope_client.py
 ================
-泰克 4/5/6 系列 MSO 示波器（含 MSO44）SCPI 底层通信层。
+泰克 4/5/6 系列 MSO 和 MDO3000 系列示波器 SCPI 底层通信层。
 
 设计原则：
 - 不依赖 NI-VISA / pyvisa，纯 Python 标准库 socket 实现。
   原因：实验室里示波器多、电脑多，装 VISA 驱动是额外负担；
-  泰克示波器的网口本身就支持"raw socket SCPI"（固定端口 4000），
+  泰克示波器的网口本身就支持"raw socket SCPI"（本项目使用默认端口 4000），
   直接 TCP 连接发送 ASCII 命令即可，无需额外驱动。
 - 所有网络细节封装在这一个文件里，其他代码只管调用方法、不管 socket。
 
@@ -18,7 +18,7 @@ scope_client.py
 import socket
 import time
 
-# 泰克示波器网口 raw socket SCPI 固定端口，4/5/6 系列都是这个
+# 4/5/6 MSO 和 MDO3000 的默认 socket 端口；MDO3000 需设为协议 NONE
 DEFAULT_PORT = 4000
 DEFAULT_TIMEOUT = 30.0  # 秒。截图、大波形传输可能较慢，超时不要设太短
 
@@ -59,7 +59,8 @@ class TekScope:
             raise ScopeConnectionError(
                 f"无法连接到示波器 {self.ip}:{self.port} —— {e}。"
                 f"请检查：1) IP是否正确 2) 电脑和示波器是否在同一网段 "
-                f"3) 示波器网络设置里 Socket Server 是否开启"
+                f"3) 示波器 Socket Server 是否开启、端口是否为 {self.port}，"
+                f"MDO3000 协议是否为 NONE"
             ) from e
         self.sock.settimeout(self.timeout)
         # HEADER OFF：让查询命令返回纯数值，不带命令名前缀，方便解析
@@ -133,10 +134,10 @@ class TekScope:
                 raise ScopeCommandError("响应数据超出预期长度，可能协议解析有误")
         return buf
 
-    def query(self, cmd: str) -> str:
-        """发送一条查询命令（以 ? 结尾），返回文本响应（已去除首尾空白）"""
+    def query(self, cmd: str, max_bytes: int = 1 << 20) -> str:
+        """返回文本响应；大波形可通过 max_bytes 指定响应长度上限。"""
         self.write(cmd)
-        raw = self._read_line()
+        raw = self._read_line(max_bytes=max_bytes)
         return raw.decode("ascii", errors="replace").strip()
 
     def query_raw_block(self, cmd: str) -> bytes:

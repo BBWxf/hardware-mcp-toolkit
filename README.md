@@ -12,7 +12,7 @@
 | `GPIB_MCP` | 通用 GPIB/VISA 文本与二进制通信；Chroma 6530、66205、63200A 专用工具 | Python 3.12、uv、系统 VISA 和 GPIB 控制器驱动 | [GPIB MCP](GPIB_MCP/README.md) |
 | `JLINK_MCP` | 固件擦除、烧录、校验、复位；支持 HEX/BIN/ELF | Windows、Python 3.10+、SEGGER J-Link；Python 与 DLL 位数必须一致 | [J-Link MCP](JLINK_MCP/README.md) |
 | `NI8451_MCP` | NI USB-845x 设备连接、I2C 扫描、读写和写后读；不包含 SPI/数字 IO | Windows、Python 3.10+、NI-845x 驱动 | [NI USB-845x I2C MCP](NI8451_MCP/README.md) |
-| `SCOPE_MCP` | 泰克 4/5/6 系列 MSO 的识别、截图、波形、测量及采集设置 | 64 位 Python 3.10+；示波器网络连接、raw socket SCPI 和截图用 VXI-11 | [泰克示波器 MCP](SCOPE_MCP/README.md) |
+| `SCOPE_MCP` | 泰克 4/5/6 系列 MSO、MDO3000 系列的自动识别、截图、波形、测量及采集设置 | 64 位 Python 3.10+；示波器网络连接、raw socket SCPI 和截图用 VXI-11 | [泰克示波器 MCP](SCOPE_MCP/README.md) |
 
 > 支持范围和已知限制以各子项目 README 为准。不同仪器型号、固件版本和驱动组合可能需要实机验证。
 
@@ -98,6 +98,7 @@ uv sync --python 3.12
 | COM | `.\.venv\Scripts\python.exe -m unittest -v` |
 | GPIB | `uv run pytest --ignore=tests/test_hardware.py` |
 | NI USB-845x | `.\.venv\Scripts\python.exe -m unittest -v`；`.\.venv\Scripts\python.exe check_mcp.py` |
+| SCOPE | `.\.venv\Scripts\python.exe -m unittest discover -v` |
 
 J-Link 的 `manual_test.py flash` 和示波器的 `test_connection.py` 是真实硬件操作脚本，不属于无硬件单元测试。不要在仓库根目录对所有项目统一执行测试发现，也不要在无硬件验证中使用 NI 检查脚本的 `--hardware` / `--connect` 参数。
 

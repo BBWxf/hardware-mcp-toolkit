@@ -108,7 +108,7 @@ def get_waveform(ip: str, channel: str = "CH1", max_points: int = 100_000) -> di
 @mcp.tool()
 def get_measurement(ip: str, channel: str = "CH1", meas_type: str = "FREQUENCY") -> dict:
     """
-    读取自动测量值。
+    读取自动测量值；自动识别型号，MDO3000 使用即时测量，不占用面板测量槽位。
     meas_type 常见取值: FREQUENCY, PERIOD, PK2Pk, AMPlitude, MEAN, RMS,
     RISetime, FALltime, PWIDth, NWIDth, MAXimum, MINImum, HIGH, LOW, OVERshoot
     """
@@ -127,7 +127,7 @@ def set_channel(ip: str, channel: str, enabled: bool = None, scale: float = None
     channel: CH1/CH2/CH3/CH4
     enabled: 是否显示该通道
     scale: 垂直挡位 (V/div)
-    coupling: AC / DC / DCREJect
+    coupling: AC / DC / DCREJect（DCREJect 需要探头支持）
     position: 垂直位置 (格)
     """
     return _wrap_errors(scope_commands.set_channel, ip, channel, enabled, scale, coupling, position)
