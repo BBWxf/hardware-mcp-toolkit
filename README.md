@@ -1,8 +1,8 @@
 # 硬件 MCP 工具箱（hardware-mcp-toolkit）
 
-通过 [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) 将串口、GPIB/VISA 仪器、J-Link、NI USB-845x I2C 接口和泰克示波器接入支持 MCP 的客户端。
+通过 [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) 将串口、GPIB/VISA 仪器、J-Link、NI USB-845x I2C 接口、泰克示波器和 ZLG USB-CAN2 接入支持 MCP 的客户端。
 
-本仓库包含 **5 个独立的 Python stdio MCP 服务**，以 Windows 实验室环境为主。可以只安装所需的项目；各项目使用自己的虚拟环境、依赖和启动入口，不需要同时安装或运行全部服务。
+本仓库包含 **6 个独立的 Python stdio MCP 服务**，以 Windows 实验室环境为主。可以只安装所需的项目；各项目使用自己的虚拟环境、依赖和启动入口，不需要同时安装或运行全部服务。
 
 ## 工具列表
 
@@ -13,6 +13,7 @@
 | `JLINK_MCP` | 固件擦除、烧录、校验、复位；支持 HEX/BIN/ELF | Windows、Python 3.10+、SEGGER J-Link；Python 与 DLL 位数必须一致 | [J-Link MCP](JLINK_MCP/README.md) |
 | `NI8451_MCP` | NI USB-845x 设备连接、I2C 扫描、读写和写后读；不包含 SPI/数字 IO | Windows、Python 3.10+、NI-845x 驱动 | [NI USB-845x I2C MCP](NI8451_MCP/README.md) |
 | `SCOPE_MCP` | 泰克 4/5/6 系列 MSO、MDO3000 系列的自动识别、截图、波形、测量及采集设置 | 64 位 Python 3.10+；示波器网络连接、raw socket SCPI 和截图用 VXI-11 | [泰克示波器 MCP](SCOPE_MCP/README.md) |
+| `ZLGCAN_MCP` | ZLG USB-CAN2 双通道经典 CAN 收发、只听、队列计数、错误读取和复位；10 个工具 | Windows、Python 3.10+、ZLG SDK 与 USB 驱动；已验证的 x86 SDK 需要 32 位 Python | [ZLG USB-CAN2 MCP](ZLGCAN_MCP/README.md) |
 
 > 支持范围和已知限制以各子项目 README 为准。不同仪器型号、固件版本和驱动组合可能需要实机验证。
 
@@ -35,7 +36,7 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-其他使用 `requirements.txt` 的项目也应在各自目录创建独立环境。J-Link 须先确认 DLL 与 Python 的位数；不要直接套用不匹配的解释器。
+其他使用 `requirements.txt` 的项目也应在各自目录创建独立环境。J-Link 和 ZLG CAN 须先确认 DLL 与 Python 的位数；ZLG 已验证的 SDK 为 x86，需使用 32 位 Python，不要直接套用不匹配的解释器。
 
 GPIB 项目使用 uv，在 `GPIB_MCP` 目录执行：
 
@@ -43,7 +44,7 @@ GPIB 项目使用 uv，在 `GPIB_MCP` 目录执行：
 uv sync --python 3.12
 ```
 
-**不要合并五个项目的依赖环境：** GPIB 使用 MCP SDK 2.x，其他项目使用 MCP SDK 1.x。
+**不要合并六个项目的依赖环境：** GPIB 使用 MCP SDK 2.x，其他项目使用 MCP SDK 1.x。
 
 ### 3. 接入 MCP 客户端
 
@@ -69,11 +70,13 @@ uv sync --python 3.12
 - **串口 / GPIB / NI USB-845x：** 按工具要求传入串口、VISA 资源或设备名；自动发现不代表可以跳过设备身份核对。
 - **J-Link：** 首次启动会生成 `%USERPROFILE%\.jlink_mcp\config.json`，按 [配置说明](JLINK_MCP/README.md#配置文件)填写安装路径、芯片和固件路径。实际固件及产品工程不包含在仓库中。
 - **示波器：** 将 `SCOPE_MCP/scopes.example.json` 复制为同目录的 `scopes.json`，填写实际 IP。示例使用文档专用地址，不能直接连接真实设备；也可以在工具调用中显式指定 `ip`。
+- **ZLG CAN：** 安装 USB-CAN2 驱动并准备完整 SDK，通过 `ZLGCAN_DLL_PATH` 指定 `zlgcan.dll`，或使用子项目文档中的默认目录。设备类型固定为 4，连接索引与 CAN 通道索引不同；默认只听，不自动发送报文。
 
 厂商驱动、DLL、安装包和仪器手册不随仓库分发。请从官方渠道获取，并遵守对应授权条款：
 
 - [NI 驱动下载](https://www.ni.com/en/support/downloads/drivers.html)：NI-VISA、NI-488.2、NI-845x。
 - [SEGGER J-Link 下载](https://www.segger.com/downloads/jlink/)。
+- [ZLG 官方网站](https://www.zlg.cn/)：获取 USB-CAN2 的 USB 驱动与配套 SDK。
 - [Chroma 官方网站](https://www.chromaate.com/)：查阅对应型号的操作与编程手册。
 - [泰克 4/5/6 系列 MSO 编程手册](https://download.tek.com/manual/4-5-6Series-MSO-Programmer-Interface-Manual_EN-US_077130508.pdf)。
 
@@ -85,6 +88,7 @@ uv sync --python 3.12
 - J-Link 烧录默认先擦除、完成后复位运行，会覆盖目标芯片的固件。
 - I2C 扫描、写入以及部分读取可能改变从机状态；先确认协议、供电、上拉和电平。USB-8451 的 I2C 电平由外部上拉决定。
 - 打开串口以及改变 RTS/DTR 可能复位开发板或切换烧录模式。
+- CAN 发送会操作实际总线；先确认帧 ID、内容、波特率、接线和终端电阻。正常模式会 ACK 报文，默认只听模式不会。
 - 示波器测量、波形读取和设置会更改部分仪器配置；多人或多客户端操作同一设备可能互相干扰。
 
 调用前确认目标设备、接线、参数、额定范围和操作者授权。不要让自动化流程在无人确认的情况下执行擦除、烧录、供电或总线写操作。
@@ -99,8 +103,9 @@ uv sync --python 3.12
 | GPIB | `uv run pytest --ignore=tests/test_hardware.py` |
 | NI USB-845x | `.\.venv\Scripts\python.exe -m unittest -v`；`.\.venv\Scripts\python.exe check_mcp.py` |
 | SCOPE | `.\.venv\Scripts\python.exe -m unittest discover -v` |
+| ZLG CAN | `.\.venv\Scripts\python.exe -m unittest -v`；`.\.venv\Scripts\python.exe check_mcp.py` |
 
-J-Link 的 `manual_test.py flash` 和示波器的 `test_connection.py` 是真实硬件操作脚本，不属于无硬件单元测试。不要在仓库根目录对所有项目统一执行测试发现，也不要在无硬件验证中使用 NI 检查脚本的 `--hardware` / `--connect` 参数。
+J-Link 的 `manual_test.py flash` 和示波器的 `test_connection.py` 是真实硬件操作脚本，不属于无硬件单元测试。不要在仓库根目录对所有项目统一执行测试发现，也不要在无硬件验证中使用 NI 检查脚本的 `--hardware` / `--connect` 参数，或 ZLG 检查脚本的 `--connect` 参数。
 
 ## 仓库结构
 
@@ -113,7 +118,8 @@ J-Link 的 `manual_test.py flash` 和示波器的 `test_connection.py` 是真实
 ├── GPIB_MCP/
 ├── JLINK_MCP/
 ├── NI8451_MCP/
-└── SCOPE_MCP/
+├── SCOPE_MCP/
+└── ZLGCAN_MCP/
 ```
 
 虚拟环境、缓存、本地客户端配置、真实示波器配置、截图、产品固件、J-Flash 工程、厂商二进制文件和本地开发资料均不纳入版本管理。发布前仍应检查实际待提交文件，避免泄露产品信息和凭据。

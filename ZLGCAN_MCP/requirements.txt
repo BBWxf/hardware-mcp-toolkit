@@ -1,0 +1,3 @@
+mcp[cli]==1.30.0
+# cryptography 50 不再提供 win32 wheel；46.0.7 提供 Python 3.12 x86 所需的预编译包。
+cryptography==46.0.7; sys_platform == "win32"

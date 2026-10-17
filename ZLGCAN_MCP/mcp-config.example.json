@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "zlgcan": {
+      "command": "C:\\path\\to\\hardware-mcp-toolkit\\ZLGCAN_MCP\\.venv\\Scripts\\python.exe",
+      "args": ["C:\\path\\to\\hardware-mcp-toolkit\\ZLGCAN_MCP\\server.py"]
+    }
+  }
+}
