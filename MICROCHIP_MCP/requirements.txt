@@ -1,0 +1,3 @@
+mcp[cli]==1.30.0
+# 本机可能使用 32 位 Python；该版本提供 Windows x86 wheel。
+cryptography==46.0.7; sys_platform == "win32"

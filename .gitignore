@@ -25,6 +25,7 @@ dist/
 
 # 实际设备配置与运行输出（保留示例配置）
 /SCOPE_MCP/scopes.json
+/MICROCHIP_MCP/config.json
 screenshots/
 test_screenshot.png
 *.log

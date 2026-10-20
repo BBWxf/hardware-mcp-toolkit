@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "microchip-ipe": {
+      "command": "C:/path/to/hardware-mcp-toolkit/MICROCHIP_MCP/.venv/Scripts/python.exe",
+      "args": [
+        "C:/path/to/hardware-mcp-toolkit/MICROCHIP_MCP/server.py",
+        "--config",
+        "C:/path/to/hardware-mcp-toolkit/MICROCHIP_MCP/config.json"
+      ]
+    }
+  }
+}

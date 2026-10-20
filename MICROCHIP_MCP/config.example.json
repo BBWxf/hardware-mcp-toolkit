@@ -1,0 +1,29 @@
+{
+  "ipe": {
+    "executable_path": "C:/Program Files/Microchip/MPLABX/v6.00/mplab_platform/mplab_ipe/ipecmd.exe",
+    "timeout_seconds": 180,
+    "output_encoding": null,
+    "logs_directory": "logs",
+    "dfp": null
+  },
+  "programmer": {
+    "type": "PK4",
+    "serial_number": null
+  },
+  "target": {
+    "device": null,
+    "power_from_programmer": true,
+    "voltage_v": null,
+    "release_from_reset": false,
+    "interface": null,
+    "speed_mhz": null
+  },
+  "programming": {
+    "hex_file": null,
+    "memory_region": "all",
+    "verify_after_program": null
+  },
+  "readback": {
+    "hex_file": null
+  }
+}
