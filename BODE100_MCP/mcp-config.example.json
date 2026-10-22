@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "bode100": {
+      "command": "C:/path/to/hardware-mcp-toolkit/BODE100_MCP/.venv/Scripts/python.exe",
+      "args": [
+        "C:/path/to/hardware-mcp-toolkit/BODE100_MCP/server.py",
+        "--host", "127.0.0.1",
+        "--port", "5025",
+        "--timeout", "10"
+      ],
+      "env": {
+        "PYTHONUTF8": "1"
+      }
+    }
+  }
+}
